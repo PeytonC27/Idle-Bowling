@@ -552,14 +552,14 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1673273221}
         m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
-        m_MethodName: BuyWeightUpgrade
-        m_Mode: 1
+        m_MethodName: TryUpgrade
+        m_Mode: 5
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: 
+          m_StringArgument: Weight
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &640959917
@@ -1266,14 +1266,14 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1673273221}
         m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
-        m_MethodName: BuyAutoBowl
-        m_Mode: 1
+        m_MethodName: TryUpgrade
+        m_Mode: 5
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: 
+          m_StringArgument: AutoBowl
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &1106160104
@@ -2118,14 +2118,14 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1673273221}
         m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
-        m_MethodName: BuyRowUpgrade
-        m_Mode: 1
+        m_MethodName: TryUpgrade
+        m_Mode: 5
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: 
+          m_StringArgument: Row
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &1595925954
@@ -2917,14 +2917,14 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1673273221}
         m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
-        m_MethodName: BuySpeedUpgrade
-        m_Mode: 1
+        m_MethodName: TryUpgrade
+        m_Mode: 5
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: 
+          m_StringArgument: Speed
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &2141525423

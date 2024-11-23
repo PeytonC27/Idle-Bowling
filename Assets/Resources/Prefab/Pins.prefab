@@ -44,6 +44,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb665d1035a06e44eb6b278b888658fe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rows: 4
+  rows: 0
   headPinPosition: {x: 0, y: 0.5, z: 4}
   pinPrefab: {fileID: 5678358696486346608, guid: fef24660f8abb574fa01889e4f53254a, type: 3}

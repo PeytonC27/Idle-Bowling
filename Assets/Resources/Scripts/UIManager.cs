@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
@@ -16,6 +17,8 @@ public class UIManager : MonoBehaviour
     GameObject addRowButton;
     GameObject autoBowlButton;
     GameObject throwButton;
+
+    GameObject[] upgradeButtons;
 
     Color cantAffordColor = new Color(0.6f, 0.6f, 0.6f);
 
@@ -33,6 +36,13 @@ public class UIManager : MonoBehaviour
         addRowButton = canv.Find("AddRow").gameObject;
         autoBowlButton = canv.Find("AddAutoBowl").gameObject;
         throwButton = canv.Find("ThrowButton").gameObject;
+
+        upgradeButtons = new GameObject[] {
+            speedButton,
+            weightButton,
+            addRowButton,
+            autoBowlButton
+        };
     }
 
     // Update is called once per frame
@@ -41,12 +51,22 @@ public class UIManager : MonoBehaviour
         
     }
 
-    public void UpdateButtonHighlights(int score, int weightCost, int speedCost, int addRowCost, int autoBowlCost)
+    public void UpdateButtonHighlights(List<Upgrade> upgrades, int score)
     {
-        HighlightButton(weightButton, score, weightCost);
-        HighlightButton(speedButton, score, speedCost);
-        HighlightButton(addRowButton, score, addRowCost);
-        HighlightButton(autoBowlButton, score, autoBowlCost);
+        if (upgradeButtons.Length != upgrades.Count)
+            return;
+
+        for (int i = 0; i < upgradeButtons.Length; i++)
+            HighlightButton(upgradeButtons[i], score, upgrades[i].cost);
+    }
+
+    public void UpdateCosts(List<Upgrade> upgrades)
+    {
+        if (upgradeButtons.Length != upgrades.Count)
+            return;
+
+        for (int i = 0; i < upgradeButtons.Length; i++)
+            SetButtonText(upgradeButtons[i], upgrades[i].upgradeText, upgrades[i].cost);
     }
 
     /// <summary>
@@ -59,7 +79,7 @@ public class UIManager : MonoBehaviour
     /// <param name="comparison"></param>
     void HighlightButton(GameObject button, int currentScore, int comparison)
     {
-        if (currentScore < comparison || comparison == -1)
+        if (currentScore < comparison)
             SetButtonColor(button, cantAffordColor);
         else
             SetButtonColor(button, Color.white);
@@ -70,26 +90,6 @@ public class UIManager : MonoBehaviour
         button.GetComponent<Image>().color = color;
     }
 
-    public void SetWeightCost(int cost)
-    {
-        SetButtonText(weightButton, "Increase Weight", cost);
-    }
-
-    public void SetSpeedCost(int cost)
-    {
-        SetButtonText(speedButton, "Increase Speed", cost);
-    }
-
-    public void SetRowCost(int cost)
-    {
-        SetButtonText(addRowButton, "Add Extra Pins", cost);
-    }
-
-    public void SetAutoBowlCost(int cost)
-    {
-        SetButtonText(autoBowlButton, "Unlock Auto-Bowl", cost);
-    }
-
     /// <summary>
     /// Sets an upgrade button's text with its cost
     /// </summary>
@@ -98,7 +98,7 @@ public class UIManager : MonoBehaviour
     /// <param name="cost"></param>
     void SetButtonText(GameObject button, string upgradeText, int cost)
     {
-        string s = cost != -1 ? cost.ToString() : "MAX";
+        string s = cost != int.MaxValue ? cost.ToString() : "MAX";
         button.transform.GetChild(0).GetComponent<TMP_Text>().text = upgradeText + " (" + s + ")";
     }
 
