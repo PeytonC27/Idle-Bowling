@@ -13,13 +13,20 @@ public class BowlingBall : MonoBehaviour
 
     Rigidbody rb;
     bool canThrow = true;
+    float radius;
 
-    public int BallSpeed { get { return Mathf.RoundToInt(ballSpeed); } }
-    public int Weight { get { return Mathf.RoundToInt(rb.mass); } }
+    public float BallSpeed { get { return ballSpeed; } }
+    public float Weight { get { return rb.mass; } }
+    public float ThrowAngleVariance { get { return throwAngleVariation; } }
+
+    public Vector3 Position { get { return transform.position; } }
+
+    public float BallRadius { get { return radius; } }
 
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        radius = transform.localScale.x;
     }
 
     // Update is called once per frame
@@ -43,16 +50,16 @@ public class BowlingBall : MonoBehaviour
         }
     }
 
-    public void ThrowBall()
+    public void ThrowBall(Vector3 dir)
     {
         if (canThrow)
         {
-            Vector3 headingTo = new Vector3(0, 0, 4) - transform.position;
+            Vector3 headingTo = dir - Position;
             float distance = headingTo.magnitude;
             var direction = headingTo / distance;
 
             rb.velocity = Quaternion.AngleAxis(Randomize(throwAngleVariation), Vector3.up) *
-                direction * (ballSpeed + Random.value * ballSpeed * Randomize(speedVariance));
+                direction * (ballSpeed + ballSpeed * Randomize(speedVariance));
             // rb.angularVelocity = new Vector3(0, 0.1f, 0.9f) * 100000;
 
             canThrow = false;
@@ -76,21 +83,27 @@ public class BowlingBall : MonoBehaviour
         return Random.value * (2 * val) - val;
     }
 
-    public void AddSpeed(int amt)
+    public void AddSpeed(float amt)
     {
         if (amt < 0) return;
         this.ballSpeed += amt;
     }
 
-    public void AddWeight(int amt)
+    public void AddWeight(float amt)
     {
         if (amt < 0) return;
         rb.mass += amt;
     }
 
-    public void IncreaseAccuracy()
+    public void ModifyAngleVariance(float amt)
     {
-        throwAngleVariation -= 0.1f;
+        throwAngleVariation += amt;
+    }
+
+    public void IncreaseRadius(float amt)
+    {
+        radius += amt;
+        gameObject.transform.localScale = new Vector3(radius, radius, radius);
     }
 
     public float GetSpeed()

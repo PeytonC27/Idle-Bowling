@@ -8,15 +8,13 @@ using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
+    PinDisplay pinDisplay;
+
     TMP_Text scoreboard;
     TMP_Text ballStats;
     TMP_Text launchStats;
 
-    GameObject weightButton;
-    GameObject speedButton;
-    GameObject addRowButton;
-    GameObject autoBowlButton;
-    GameObject throwButton;
+    GameObject speedButton, weightButton, addAccuracyButton, addSizeButton, addRowButton;
 
     GameObject[] upgradeButtons;
 
@@ -31,17 +29,20 @@ public class UIManager : MonoBehaviour
         ballStats = canv.Find("BallStats").GetComponent<TMP_Text>();
         launchStats = canv.Find("LaunchStats").GetComponent<TMP_Text>();
 
-        weightButton = canv.Find("AddWeight").gameObject;
         speedButton = canv.Find("AddSpeed").gameObject;
+        weightButton = canv.Find("AddWeight").gameObject;
+        addAccuracyButton = canv.Find("AddAccuracy").gameObject;
+        addSizeButton = canv.Find("AddSize").gameObject;
         addRowButton = canv.Find("AddRow").gameObject;
-        autoBowlButton = canv.Find("AddAutoBowl").gameObject;
-        throwButton = canv.Find("ThrowButton").gameObject;
+
+        pinDisplay = canv.Find("PinDisplay").GetComponent<PinDisplay>();
 
         upgradeButtons = new GameObject[] {
             speedButton,
             weightButton,
-            addRowButton,
-            autoBowlButton
+            addAccuracyButton,
+            addSizeButton,
+            addRowButton
         };
     }
 
@@ -51,13 +52,13 @@ public class UIManager : MonoBehaviour
         
     }
 
-    public void UpdateButtonHighlights(List<Upgrade> upgrades, int score)
+    public void UpdateButtonHighlights(List<Upgrade> upgrades, int score, bool allowedToUpgrade)
     {
         if (upgradeButtons.Length != upgrades.Count)
             return;
 
         for (int i = 0; i < upgradeButtons.Length; i++)
-            HighlightButton(upgradeButtons[i], score, upgrades[i].cost);
+            HighlightButton(upgradeButtons[i], score, upgrades[i].cost, allowedToUpgrade);
     }
 
     public void UpdateCosts(List<Upgrade> upgrades)
@@ -66,7 +67,7 @@ public class UIManager : MonoBehaviour
             return;
 
         for (int i = 0; i < upgradeButtons.Length; i++)
-            SetButtonText(upgradeButtons[i], upgrades[i].upgradeText, upgrades[i].cost);
+            SetButtonText(upgradeButtons[i], upgrades[i]);
     }
 
     /// <summary>
@@ -77,9 +78,9 @@ public class UIManager : MonoBehaviour
     /// <param name="button"></param>
     /// <param name="currentScore"></param>
     /// <param name="comparison"></param>
-    void HighlightButton(GameObject button, int currentScore, int comparison)
+    void HighlightButton(GameObject button, int currentScore, int comparison, bool allowedToUpgrade)
     {
-        if (currentScore < comparison)
+        if (currentScore < comparison || !allowedToUpgrade)
             SetButtonColor(button, cantAffordColor);
         else
             SetButtonColor(button, Color.white);
@@ -96,10 +97,11 @@ public class UIManager : MonoBehaviour
     /// <param name="button"></param>
     /// <param name="upgradeText"></param>
     /// <param name="cost"></param>
-    void SetButtonText(GameObject button, string upgradeText, int cost)
+    void SetButtonText(GameObject button, Upgrade upgrade)
     {
-        string s = cost != int.MaxValue ? cost.ToString() : "MAX";
-        button.transform.GetChild(0).GetComponent<TMP_Text>().text = upgradeText + " (" + s + ")";
+        string s = upgrade.cost != int.MaxValue ? upgrade.cost.ToString() : "";
+        string level = upgrade.level < upgrade.maxLevel ? upgrade.level.ToString() : "MAXED";
+        button.transform.GetChild(0).GetComponent<TMP_Text>().text = "[" + level + "] " + upgrade.upgradeText + " (" + s + ")";
     }
 
     public void SetScore(int score)
@@ -107,9 +109,12 @@ public class UIManager : MonoBehaviour
         scoreboard.text = score.ToString();
     }
 
-    public void DisplayBallStats(int speed, int weight)
+    public void DisplayBallStats(BowlingBall ball)
     {
-        ballStats.text = "Weight: " + weight + "\nAvg Speed: " + speed;
+        ballStats.text = "Weight: " + Math.Round(ball.Weight, 1) 
+            + "\nAvg Speed: " + Math.Round(ball.BallSpeed, 1)
+            + "\nAccuracy: " + (Math.Round(1/ball.ThrowAngleVariance, 4) * 100) + "%"
+            + "\nBall Radius: " + Math.Round(ball.BallRadius, 2);
     }
 
     public void ShowLaunch(float speedOfLaunch)
@@ -117,9 +122,8 @@ public class UIManager : MonoBehaviour
         launchStats.text = "Ball Speed: " + Math.Round(speedOfLaunch, 2);
     }
 
-    public void DisableThrowButton()
+    public void UpdatePinDisplay(PinSetter setter)
     {
-        if (throwButton != null)
-            throwButton.GetComponent<Button>().interactable = false;
+        pinDisplay.UpdateDisplay(setter.Pins);
     }
 }

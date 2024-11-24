@@ -8,15 +8,17 @@ public class Upgrade
     public string upgradeText;
     public int cost;
     public int level;
+    public int maxLevel;
     public Func<int, int> IncrementFunction;
 
     public Action OnUpgrade;
 
-    public Upgrade(string name, string upgradeText, int cost, Func<int, int> incrementFunction, Action onUpgrade)
+    public Upgrade(string name, string upgradeText, int cost, int maxLevel, Func<int, int> incrementFunction, Action onUpgrade)
     {
         this.name = name;
         this.upgradeText = upgradeText;
         this.cost = cost;
+        this.maxLevel = maxLevel;
         this.level = 0;
         this.IncrementFunction = incrementFunction;
         this.OnUpgrade = onUpgrade;
@@ -24,7 +26,7 @@ public class Upgrade
 
     bool CanUpgrade(int score)
     {
-        return score >= cost;
+        return score >= cost && level < maxLevel;
     }
 
     public void ApplyUpgrade(ref int currentScore)
