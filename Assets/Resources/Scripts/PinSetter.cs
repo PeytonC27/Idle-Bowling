@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SocialPlatforms.Impl;
 
 public class PinSetter : MonoBehaviour
 {
@@ -32,7 +33,7 @@ public class PinSetter : MonoBehaviour
         }
     }
 
-    public int CountPins()
+    public int CalculateScore(int goldMultiplier, float strikeMultiplier, int regularPinMultiplier)
     {
         int count = 0;
         int score = 0;
@@ -41,18 +42,31 @@ public class PinSetter : MonoBehaviour
             if (pin.IsDown())
             {
                 if (pin.type == PinType.GOLDEN)
-                    score += 10;
+                    score += goldMultiplier;
                 else
-                    score += 1;
+                    score += regularPinMultiplier;
                 count++;
             }
 
         }
 
         if (count == pins.Length)
-            return score * 2;
+            return Mathf.RoundToInt(score * strikeMultiplier);
 
         return score;
+    }
+
+    public bool IsStrike()
+    {
+        foreach (var pin in pins)
+        {
+            if (pin.IsDown())
+                continue;
+            else
+                return false;
+
+        }
+        return true;
     }
 
     public void AddRows(int amt)

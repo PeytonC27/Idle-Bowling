@@ -1,22 +1,24 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.UI;
+using static UnityEngine.UI.Button;
 
 public class UIManager : MonoBehaviour
 {
     PinDisplay pinDisplay;
 
     TMP_Text scoreboard;
+    TMP_Text strikeScoreboard;
     TMP_Text ballStats;
     TMP_Text launchStats;
 
     Toggle autoToggle;
 
-    GameObject speedButton, weightButton, addAccuracyButton, addSizeButton, addCompanionButton, addGoldOddsButton;
     GameObject[] upgradeButtons;
 
     Color cantAffordColor = new Color(0.6f, 0.6f, 0.6f);
@@ -27,28 +29,13 @@ public class UIManager : MonoBehaviour
     void Start()
     {
         scoreboard = GameObject.Find("Score").GetComponent<TMP_Text>();
+        strikeScoreboard = GameObject.Find("StrikeScore").GetComponent<TMP_Text>();
         ballStats = GameObject.Find("BallStats").GetComponent<TMP_Text>();
         launchStats = GameObject.Find("LaunchStats").GetComponent<TMP_Text>();
-
-        speedButton = GameObject.Find("AddSpeed").gameObject;
-        weightButton = GameObject.Find("AddWeight").gameObject;
-        addAccuracyButton = GameObject.Find("AddAccuracy").gameObject;
-        addSizeButton = GameObject.Find("AddSize").gameObject;
-        addCompanionButton = GameObject.Find("AddCompanion").gameObject;
-        addGoldOddsButton = GameObject.Find("AddGoldOdds").gameObject;
 
         autoToggle = GameObject.Find("AutoToggle").GetComponent<Toggle>();
 
         pinDisplay = GameObject.Find("PinDisplay").GetComponent<PinDisplay>();
-
-        upgradeButtons = new GameObject[] {
-            speedButton,
-            weightButton,
-            addAccuracyButton,
-            addSizeButton,
-            addCompanionButton,
-            addGoldOddsButton
-        };
     }
 
     // Update is called once per frame
@@ -57,13 +44,31 @@ public class UIManager : MonoBehaviour
         
     }
 
-    public void UpdateButtonHighlights(List<Upgrade> upgrades, int score, bool allowedToUpgrade)
+    public void SetupButtonUI(List<Upgrade> upgrades, Action<string> UpgradeFunction)
+    {
+        upgradeButtons = new GameObject[upgrades.Count];
+
+        for (int i = 0; i < upgrades.Count; i++)
+        {
+            string upgradeName = upgrades[i].name;
+
+            upgradeButtons[i] = GameObject.Find("Button" + i).gameObject;
+            upgradeButtons[i].GetComponent<Button>().onClick.AddListener(delegate { UpgradeFunction(upgradeName); });
+
+        }
+    }
+
+    public void UpdateButtonHighlights(List<Upgrade> upgrades, int score, int strikeScore, bool allowedToUpgrade)
     {
         if (upgradeButtons.Length != upgrades.Count)
             return;
 
         for (int i = 0; i < upgradeButtons.Length; i++)
-            HighlightButton(upgradeButtons[i], score, upgrades[i].cost, allowedToUpgrade);
+        {
+
+            int scoreToUse = upgrades[i].costType == CostType.SCORE ? score : strikeScore;
+            HighlightButton(upgradeButtons[i], scoreToUse, upgrades[i].cost, allowedToUpgrade);
+        }
     }
 
     public void UpdateCosts(List<Upgrade> upgrades)
@@ -104,23 +109,30 @@ public class UIManager : MonoBehaviour
     /// <param name="cost"></param>
     void SetButtonText(GameObject button, Upgrade upgrade)
     {
-        string s = upgrade.cost != int.MaxValue ? upgrade.cost.ToString() : "";
-        string level = upgrade.level < upgrade.maxLevel ? upgrade.level.ToString() : "MAXED";
-        button.transform.GetChild(0).GetComponent<TMP_Text>().text = "[" + level + "] " + upgrade.upgradeText + " (" + s + ")";
+        string upgradeCostType = upgrade.costType == CostType.SCORE ? "P" : "X";
+
+        string c = upgrade.cost != int.MaxValue ? $"({upgrade.cost} {upgradeCostType})" : "";
+        string l = upgrade.level < upgrade.maxLevel ? $"[{upgrade.level}]" : "[MAXED]";
+
+        button.transform.GetChild(0).GetComponent<TMP_Text>().text = $"{l} {upgrade.upgradeText} {c}";
     }
 
-    public void SetScore(int score)
+    public void SetScores(int score, int strikeScore)
     {
-        scoreboard.text = score.ToString();
+        scoreboard.text = score.ToString() + " P";
+        strikeScoreboard.text = strikeScore.ToString() + " X";
     }
 
     public void DisplayBallStats(Lane lane, float goldOdds)
     {
-        ballStats.text = "Weight: " + Math.Round(lane.Ball.Weight, 1) 
+        ballStats.text = "Weight: " + Math.Round(lane.Ball.Weight, 1)
             + "\nAvg Speed: " + Math.Round(lane.Ball.BallSpeed, 1)
-            + "\nAccuracy: " + (Math.Round(1/lane.Ball.ThrowAngleVariance, 4) * 100) + "%"
+            + "\nAccuracy: " + (Math.Round(1 / (lane.Ball.ThrowAngleVariance + 1), 4) * 100) + "%"
             + "\nBall Radius: " + Math.Round(lane.Ball.BallRadius, 2)
-            + "\nGold Pin Odds: " + Mathf.Round(goldOdds * 100) + "%";
+            + "\nGold Pin Odds: " + Mathf.Round(goldOdds * 100) + "%"
+            + "\n\nRegular Pin Mult: " + lane.regularPinMultiplier
+            + "\nStrike Mult: " + lane.strikeMultiplier
+            + "\nGold Pin Mult: " + lane.goldMultiplier;
     }
 
     public void ShowLaunch(float speedOfLaunch)

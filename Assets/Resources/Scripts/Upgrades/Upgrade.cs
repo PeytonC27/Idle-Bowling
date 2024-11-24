@@ -7,17 +7,19 @@ public class Upgrade
     public string name;
     public string upgradeText;
     public int cost;
+    public CostType costType;
     public int level;
     public int maxLevel;
     public Func<int, int> IncrementFunction;
 
     public Action OnUpgrade;
 
-    public Upgrade(string name, string upgradeText, int cost, int maxLevel, Func<int, int> incrementFunction, Action onUpgrade)
+    public Upgrade(string name, string upgradeText, CostType costType, int cost, int maxLevel, Func<int, int> incrementFunction, Action onUpgrade)
     {
         this.name = name;
         this.upgradeText = upgradeText;
         this.cost = cost;
+        this.costType = costType;
         this.maxLevel = maxLevel;
         this.level = 0;
         this.IncrementFunction = incrementFunction;

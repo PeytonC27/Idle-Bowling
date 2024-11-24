@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
@@ -12,6 +13,8 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     Vector3[] companionLaneLocations;
 
+    [SerializeField] float validThrowMousePlacementThreshold;
+
     UIManager ui;
     LineRenderer lineRenderer;
 
@@ -20,6 +23,7 @@ public class GameManager : MonoBehaviour
     List<Upgrade> upgrades;
 
     int score = 0;
+    int strikeScore = 0;
     public float goldenOdds = 0.01f;
 
     float resetCooldownDuration = 3f;
@@ -47,20 +51,38 @@ public class GameManager : MonoBehaviour
         lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
 
         companionLanes = new();
+        ui.SetupButtonUI(upgrades, TryUpgrade);
+
+        for (int i = 0; i < companionLaneLocations.Length; i++)
+        {
+            var newLane = Instantiate(lane,
+                        companionLaneLocations[i],
+                        Quaternion.identity,
+                        this.transform)
+            .GetComponent<Lane>();
+
+            newLane.enabled = false;
+            newLane.SetBallMaterial(i);
+            companionLanes.Add(newLane);
+            
+        }
     }
 
     // Update is called once per frame
     void Update()
     {
-        bool inAuto = ui.WantsAuto();
 
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
 
-        var mousePlacementRatio = Input.mousePosition / Screen.width;
-        bool validCursorPlacement = mousePlacementRatio.x > 0.2f && mousePlacementRatio.x <= 0.8f;
+        var mousePlacement = Input.mousePosition;
+        var screenCenter = Screen.width / 2f;
+
+        bool validCursorPlacement = mousePlacement.x > screenCenter - 574 && mousePlacement.x < screenCenter + 574;
 
         bool groundCheck = Physics.Raycast(ray, out hit, 100f, LayerMask.GetMask("Ground")) && hit.collider.CompareTag("Ground") && validCursorPlacement;
+
+        Debug.Log(mousePlacement);
 
         // drawing the line
         if (groundCheck && !mainLane.BallInAction)
@@ -78,13 +100,13 @@ public class GameManager : MonoBehaviour
             lineRenderer.enabled = false;
         }
         // throwing the ball
-        if (Input.GetMouseButtonDown(0) && groundCheck && !mainLane.BallInAction && !inAuto)
+        if (Input.GetMouseButtonDown(0) && groundCheck && !mainLane.BallInAction && !mainLane.AutoBowlOn)
         {
             ThrowMainBall(hit.point);
             StartCoroutine(StartResetCooldown());
         }
         // resetting the pins
-        if (Input.GetMouseButtonDown(1) && mainLane.BallInAction && !onResetCooldown && !inAuto)
+        if (Input.GetMouseButtonDown(1) && mainLane.BallInAction && !onResetCooldown && !mainLane.AutoBowlOn)
         {
             ResetMainThrow();
         }
@@ -95,7 +117,7 @@ public class GameManager : MonoBehaviour
         }
 
         // automating your own lane
-        if (inAuto)
+        if (ui.WantsAuto())
             mainLane.StartAutoBowl();
         else
             mainLane.StopAutoBowl();
@@ -129,14 +151,15 @@ public class GameManager : MonoBehaviour
         ui.UpdateButtonHighlights(
             upgrades,
             score,
-            !mainLane.BallInAction
+            strikeScore,
+            !mainLane.BallInAction || mainLane.AutoBowlOn
         );
 
         ui.UpdateCosts(
             upgrades
         );
 
-        ui.SetScore(score);
+        ui.SetScores(score, strikeScore);
         ui.DisplayBallStats(mainLane, goldenOdds);
 
         ui.UpdatePinDisplay(mainLane.PinSetter);
@@ -144,23 +167,18 @@ public class GameManager : MonoBehaviour
 
     void ClaimAllPoints()
     {
-        score += mainLane.ClaimPoints();
+        mainLane.ClaimPoints(ref score, ref strikeScore);
 
         foreach (Lane companion in companionLanes)
-            score += companion.ClaimPoints();
+            companion.ClaimPoints(ref score, ref strikeScore);
     }
 
-    void InitializeCompanionBowler()
+    void StartCompanionBowler()
     {
-        var newLane = Instantiate(lane,
-                        companionLaneLocations[companionBowlers],
-                        Quaternion.identity,
-                        this.transform)
-            .GetComponent<Lane>();
+        var newLane = companionLanes[companionBowlers];
 
+        newLane.enabled = true;
         newLane.StartAutoBowl();
-        newLane.SetBallMaterial(companionBowlers);
-        companionLanes.Add(newLane);
 
         companionBowlers++;
     }
@@ -171,37 +189,70 @@ public class GameManager : MonoBehaviour
         if (mainLane.BallInAction && !ui.WantsAuto()) return;
 
         var upgrade = upgrades.Find(u => u.name == name);
-        upgrade?.ApplyUpgrade(ref score);
+
+        if (upgrade.costType == CostType.SCORE)
+            upgrade?.ApplyUpgrade(ref score);
+        else
+            upgrade?.ApplyUpgrade(ref strikeScore);
+    }
+
+    void ApplyUpgradeToLanes(Action<Lane> action)
+    {
+        action.Invoke(mainLane);
+        foreach (Lane companion in companionLanes)
+            action.Invoke(companion);
     }
 
     void InitializeUpgrades()
     {
         upgrades = new List<Upgrade>()
         {
-            new Upgrade("Speed", "Increase Speed", 20, 100, x => x + 5, () =>
+            new Upgrade("Speed", "Increase Speed", CostType.SCORE, 20, 100, x => x + 5, () =>
             {
                 mainLane.Ball.AddSpeed(0.1f);
             }),
-            new Upgrade("Weight", "Increase Weight", 20, 100, x => x + 5, () =>
+            new Upgrade("Weight", "Increase Weight", CostType.SCORE, 20, 100, x => x + 5, () =>
             {
                 mainLane.Ball.AddWeight(0.1f);
             }),
-            new Upgrade("Accuracy", "Increase Accuracy", 20, 30, x => x + 10, () =>
+            new Upgrade("Accuracy", "Increase Accuracy", CostType.SCORE, 20, 30, x => x + 10, () =>
             {
                 mainLane.Ball.ModifyAngleVariance(-0.1f);
             }),
-            new Upgrade("Size", "Increase Ball Size", 50, 50, x => x + 25, () =>
+            new Upgrade("Size", "Increase Ball Size", CostType.SCORE, 50, 100, x => x + 25, () =>
             {
                 mainLane.Ball.IncreaseRadius(0.005f);
             }),
-            new Upgrade("Companion", "Friend", 100, 2, x => x * 10, () =>
+            new Upgrade("Companion", "Friend", CostType.SCORE, 100, 2, x => x * 10, () =>
             {
-                InitializeCompanionBowler();
+                StartCompanionBowler();
             }),
-            new Upgrade("GoldOdds", "Gold Pin Rate", 10, 6, x => x * 10, () =>
+            new Upgrade("GoldOdds", "Gold Pin Rate", CostType.SCORE, 10, 6, x => x * 5, () =>
             {
                 goldenOdds *= 2;
+            }),
+            new Upgrade("GoldPinMult", "Gold Pin Mult.", CostType.STRIKES, 1, 100, x => x * 2, () =>
+            {
+                ApplyUpgradeToLanes(lane => lane.goldMultiplier *= 2);
+            }),
+            new Upgrade("StrikeScoreMult", "Strike Score Mult.", CostType.STRIKES, 1, 100, x => x + 5, () =>
+            {
+                ApplyUpgradeToLanes(lane => lane.strikeMultiplier += 0.5f);
+            }),
+            new Upgrade("ExplosivePin", "Unlock Explosive Pin", CostType.STRIKES, 1000, 1, x => int.MaxValue, () =>
+            {
+                Debug.Log("Yay!");
+            }),
+            new Upgrade("PinMult", "Regular Pin Mult.", CostType.STRIKES, 1, 100, x => x + 2, () =>
+            {
+                ApplyUpgradeToLanes(lane => lane.regularPinMultiplier += 1);
             })
         };
     }
+}
+
+public enum CostType
+{
+    SCORE,
+    STRIKES
 }
