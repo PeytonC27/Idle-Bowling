@@ -11,32 +11,43 @@ public class PinSetter : MonoBehaviour
     Pin[] pins;
 
     public int Rows { get { return rows; } }
+    public Vector3 HeadPinPosition { get { return headPinPosition; }  }
+    public Pin[] Pins { get { return pins; } }
 
     // Update is called once per frame
     void Update()
     {
     }
 
-    public void ResetPins()
+    public void ResetPins(float goldenOdds)
     {
         foreach (var pin in pins)
         {
-            pin.RespawnPin();
-            pin.gameObject.GetComponent<Renderer>().material.color = new Color(Random.Range(0.5f, 1f), Random.Range(0.5f, 1f), Random.Range(0.5f, 1f));
+            pin.RespawnPin(goldenOdds);
         }
     }
 
     public int CountPins()
     {
-        int count = 0;  
+        int count = 0;
+        int score = 0;
         foreach (var pin in pins)
+        {
             if (pin.IsDown())
+            {
+                if (pin.type == PinType.GOLDEN)
+                    score += 10;
+                else
+                    score += 1;
                 count++;
+            }
+
+        }
 
         if (count == pins.Length)
-            return count * 3;
+            return score * 2;
 
-        return count;
+        return score;
     }
 
     public void AddRows(int amt)

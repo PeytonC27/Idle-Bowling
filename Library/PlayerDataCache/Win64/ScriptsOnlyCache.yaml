@@ -9,6 +9,7 @@ ScriptsOnlyBuild:
     - CameraScript
     - GameManager
     - Pin
+    - PinDisplay
     - PinSetter
     - UIManager
     Unity.Rider.Editor.dll:
@@ -70,19 +71,19 @@ ScriptsOnlyBuild:
   methodsToPreserve:
   - assembly: Assembly-CSharp
     fullTypeName: GameManager
-    methodName: BuyWeightUpgrade
+    methodName: TryUpgrade
   - assembly: Assembly-CSharp
     fullTypeName: GameManager
-    methodName: TryThrowBall
+    methodName: TryUpgrade
   - assembly: Assembly-CSharp
     fullTypeName: GameManager
-    methodName: BuyAutoBowl
+    methodName: TryUpgrade
   - assembly: Assembly-CSharp
     fullTypeName: GameManager
-    methodName: BuyRowUpgrade
+    methodName: TryUpgrade
   - assembly: Assembly-CSharp
     fullTypeName: GameManager
-    methodName: BuySpeedUpgrade
+    methodName: TryUpgrade
   sceneClasses:
     Assets/Scenes/SampleScene.unity:
     - Class: 1
@@ -138,20 +139,24 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 4452}
     - Class: 114
-      Script: {instanceID: 5186}
-    - Class: 114
       Script: {instanceID: 5188}
     - Class: 114
-      Script: {instanceID: 5212}
+      Script: {instanceID: 5190}
     - Class: 114
-      Script: {instanceID: 5760}
+      Script: {instanceID: 5214}
     - Class: 114
-      Script: {instanceID: 5934}
+      Script: {instanceID: 5762}
     - Class: 114
-      Script: {instanceID: 6254}
+      Script: {instanceID: 5936}
     - Class: 114
-      Script: {instanceID: 7810}
+      Script: {instanceID: 6256}
+    - Class: 114
+      Script: {instanceID: 7812}
+    - Class: 114
+      Script: {instanceID: 46702}
     - Class: 115
+      Script: {instanceID: 0}
+    - Class: 120
       Script: {instanceID: 0}
     - Class: 128
       Script: {instanceID: 0}
@@ -1326,6 +1331,12 @@ ScriptsOnlyBuild:
     assemblyName: Unity.VisualScripting.Core
     namespaceName: Unity.VisualScripting
     className: UnityOnSliderValueChangedMessageListener
+  - hash:
+      serializedVersion: 2
+      Hash: f4873921df2cd9713122c0460526f616
+    assemblyName: Assembly-CSharp
+    namespaceName: 
+    className: PinDisplay
   platform: 19
   scenePathNames:
   - Assets/Scenes/SampleScene.unity
