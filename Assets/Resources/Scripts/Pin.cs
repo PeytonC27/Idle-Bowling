@@ -6,7 +6,7 @@ public class Pin : MonoBehaviour
 {
     Vector3 baseLocation;
     Rigidbody rb;
-    Renderer renderer;
+    Renderer pinRender;
     PinType pinType;
 
     public bool down;
@@ -20,7 +20,7 @@ public class Pin : MonoBehaviour
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        renderer = GetComponent<Renderer>();
+        pinRender = GetComponent<Renderer>();
 
         goldenMaterial = Resources.Load<Material>("Materials/Visual/Golden");
         basicMaterial = Resources.Load<Material>("Materials/Visual/BasicPin");
@@ -41,12 +41,12 @@ public class Pin : MonoBehaviour
 
         if (Random.value < goldenOdds)
         {
-            renderer.material = goldenMaterial;
+            pinRender.material = goldenMaterial;
             pinType = PinType.GOLDEN;
         }
         else
         {
-            renderer.material = basicMaterial;
+            pinRender.material = basicMaterial;
             pinType= PinType.BASIC;
         }
     }

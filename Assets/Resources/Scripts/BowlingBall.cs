@@ -5,12 +5,14 @@ using UnityEngine;
 public class BowlingBall : MonoBehaviour
 {
     [SerializeField] float ballSpeed;
-    [SerializeField] Vector3 startingPoint;
 
     [SerializeField] float ballPlacementVariance;   // distance in units
     [SerializeField] float throwAngleVariation;     // angle in degrees
     [SerializeField] float speedVariance;           // fraction of the speed
 
+    Renderer ballRenderer;
+
+    Vector3 baseLocation;
     Rigidbody rb;
     bool canThrow = true;
     float radius;
@@ -27,6 +29,9 @@ public class BowlingBall : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         radius = transform.localScale.x;
+        baseLocation = transform.position;
+
+        ballRenderer = GetComponent<Renderer>();
     }
 
     // Update is called once per frame
@@ -40,7 +45,7 @@ public class BowlingBall : MonoBehaviour
     {
         if (!canThrow)
         {
-            transform.position = startingPoint + new Vector3(Randomize(ballPlacementVariance), 0);
+            transform.position = baseLocation + new Vector3(Randomize(ballPlacementVariance), 0);
             rb.velocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
 
@@ -109,5 +114,10 @@ public class BowlingBall : MonoBehaviour
     public float GetSpeed()
     {
         return rb.velocity.z;
+    }
+
+    public void ChangeMaterial(Material material)
+    {
+        ballRenderer.material = material;
     }
 }

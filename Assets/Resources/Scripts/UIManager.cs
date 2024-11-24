@@ -14,35 +14,40 @@ public class UIManager : MonoBehaviour
     TMP_Text ballStats;
     TMP_Text launchStats;
 
-    GameObject speedButton, weightButton, addAccuracyButton, addSizeButton, addRowButton;
+    Toggle autoToggle;
 
+    GameObject speedButton, weightButton, addAccuracyButton, addSizeButton, addCompanionButton, addGoldOddsButton;
     GameObject[] upgradeButtons;
 
     Color cantAffordColor = new Color(0.6f, 0.6f, 0.6f);
 
+    [SerializeField] bool a;
+
     // Start is called before the first frame update
     void Start()
     {
-        var canv = transform.Find("UI");
+        scoreboard = GameObject.Find("Score").GetComponent<TMP_Text>();
+        ballStats = GameObject.Find("BallStats").GetComponent<TMP_Text>();
+        launchStats = GameObject.Find("LaunchStats").GetComponent<TMP_Text>();
 
-        scoreboard = canv.Find("Score").GetComponent<TMP_Text>();
-        ballStats = canv.Find("BallStats").GetComponent<TMP_Text>();
-        launchStats = canv.Find("LaunchStats").GetComponent<TMP_Text>();
+        speedButton = GameObject.Find("AddSpeed").gameObject;
+        weightButton = GameObject.Find("AddWeight").gameObject;
+        addAccuracyButton = GameObject.Find("AddAccuracy").gameObject;
+        addSizeButton = GameObject.Find("AddSize").gameObject;
+        addCompanionButton = GameObject.Find("AddCompanion").gameObject;
+        addGoldOddsButton = GameObject.Find("AddGoldOdds").gameObject;
 
-        speedButton = canv.Find("AddSpeed").gameObject;
-        weightButton = canv.Find("AddWeight").gameObject;
-        addAccuracyButton = canv.Find("AddAccuracy").gameObject;
-        addSizeButton = canv.Find("AddSize").gameObject;
-        addRowButton = canv.Find("AddRow").gameObject;
+        autoToggle = GameObject.Find("AutoToggle").GetComponent<Toggle>();
 
-        pinDisplay = canv.Find("PinDisplay").GetComponent<PinDisplay>();
+        pinDisplay = GameObject.Find("PinDisplay").GetComponent<PinDisplay>();
 
         upgradeButtons = new GameObject[] {
             speedButton,
             weightButton,
             addAccuracyButton,
             addSizeButton,
-            addRowButton
+            addCompanionButton,
+            addGoldOddsButton
         };
     }
 
@@ -109,12 +114,13 @@ public class UIManager : MonoBehaviour
         scoreboard.text = score.ToString();
     }
 
-    public void DisplayBallStats(BowlingBall ball)
+    public void DisplayBallStats(Lane lane, float goldOdds)
     {
-        ballStats.text = "Weight: " + Math.Round(ball.Weight, 1) 
-            + "\nAvg Speed: " + Math.Round(ball.BallSpeed, 1)
-            + "\nAccuracy: " + (Math.Round(1/ball.ThrowAngleVariance, 4) * 100) + "%"
-            + "\nBall Radius: " + Math.Round(ball.BallRadius, 2);
+        ballStats.text = "Weight: " + Math.Round(lane.Ball.Weight, 1) 
+            + "\nAvg Speed: " + Math.Round(lane.Ball.BallSpeed, 1)
+            + "\nAccuracy: " + (Math.Round(1/lane.Ball.ThrowAngleVariance, 4) * 100) + "%"
+            + "\nBall Radius: " + Math.Round(lane.Ball.BallRadius, 2)
+            + "\nGold Pin Odds: " + Mathf.Round(goldOdds * 100) + "%";
     }
 
     public void ShowLaunch(float speedOfLaunch)
@@ -125,5 +131,10 @@ public class UIManager : MonoBehaviour
     public void UpdatePinDisplay(PinSetter setter)
     {
         pinDisplay.UpdateDisplay(setter.Pins);
+    }
+
+    public bool WantsAuto()
+    {
+        return autoToggle.isOn;
     }
 }

@@ -29,11 +29,11 @@ public class Upgrade
         return score >= cost && level < maxLevel;
     }
 
-    public void ApplyUpgrade(ref int currentScore)
+    public void ApplyUpgrade(ref int currentScore, bool zeroCost = false)
     {
         if (!CanUpgrade(currentScore)) return;
 
-        currentScore -= cost;
+        currentScore -= zeroCost ? 0 : cost;
         cost = IncrementFunction(cost);
         level++;
         OnUpgrade?.Invoke();

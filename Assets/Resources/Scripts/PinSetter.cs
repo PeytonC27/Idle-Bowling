@@ -5,9 +5,9 @@ using UnityEngine;
 public class PinSetter : MonoBehaviour
 {
     [SerializeField] int rows = 4;
-    [SerializeField] Vector3 headPinPosition;
     [SerializeField] GameObject pinPrefab;
 
+    Vector3 headPinPosition;
     Pin[] pins;
 
     public int Rows { get { return rows; } }
@@ -17,6 +17,11 @@ public class PinSetter : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+    }
+
+    public void SetHeadpinPosition(Vector3 headPinPosition)
+    {
+        this.headPinPosition = headPinPosition;
     }
 
     public void ResetPins(float goldenOdds)

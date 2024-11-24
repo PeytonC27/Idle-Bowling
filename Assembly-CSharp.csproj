@@ -63,9 +63,10 @@
     <Compile Include="Assets\Resources\Scripts\BowlingBall.cs" />
     <Compile Include="Assets\Resources\Scripts\GameManager.cs" />
     <Compile Include="Assets\Resources\Scripts\UIManager.cs" />
-    <Compile Include="Assets\Resources\Scripts\PinSetter.cs" />
     <Compile Include="Assets\PinDisplay.cs" />
+    <Compile Include="Assets\Resources\Scripts\PinSetter.cs" />
     <Compile Include="Assets\Resources\Scripts\Upgrades\Upgrade.cs" />
+    <Compile Include="Assets\Resources\Scripts\Lane.cs" />
     <Compile Include="Assets\CameraScript.cs" />
     <Compile Include="Assets\Resources\Scripts\Pin.cs" />
   </ItemGroup>

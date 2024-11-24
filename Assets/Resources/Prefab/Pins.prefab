@@ -26,7 +26,7 @@ Transform:
   m_GameObject: {fileID: 5246476058956021640}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -45,5 +45,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rows: 0
-  headPinPosition: {x: 0, y: 0.5, z: 10}
+  headPinPosition: {x: 0, y: 0, z: 0}
   pinPrefab: {fileID: 5678358696486346608, guid: fef24660f8abb574fa01889e4f53254a, type: 3}

@@ -6,36 +6,36 @@ using UnityEngine.UIElements;
 
 public class GameManager : MonoBehaviour
 {
-    [SerializeField] GameObject bowlingBallObject;
-    [SerializeField] GameObject pinSetterObject;
+    [SerializeField]
+    GameObject lane;
 
-    LineRenderer lineRenderer;
-    BowlingBall ball;
-    PinSetter pinSetter;
-    bool waiting = false;
+    [SerializeField]
+    Vector3[] companionLaneLocations;
 
     UIManager ui;
+    LineRenderer lineRenderer;
+
+    Lane mainLane;
+    List<Lane> companionLanes;
     List<Upgrade> upgrades;
 
     int score = 0;
-    bool autoBowl = false;
-    float goldenOdds = 0.01f;
+    public float goldenOdds = 0.01f;
 
     float resetCooldownDuration = 3f;
     bool onResetCooldown = false;
+
+    int companionBowlers = 0;
+
 
 
     // Start is called before the first frame update
     void Start()
     {
-        ball = Instantiate(bowlingBallObject).GetComponent<BowlingBall>();
-        pinSetter = Instantiate(pinSetterObject).GetComponent<PinSetter>();
+        mainLane = GameObject.Find("MainLane").GetComponent<Lane>();
         ui = GameObject.Find("UI").GetComponent<UIManager>();
 
         InitializeUpgrades();
-        pinSetter.AddRows(4);
-        ball.RespawnBall();
-        pinSetter.ResetPins(goldenOdds);
 
         lineRenderer = GetComponent<LineRenderer>();
         lineRenderer.startWidth = 0.05f;
@@ -45,15 +45,14 @@ public class GameManager : MonoBehaviour
         lineRenderer.endColor = Color.white;
         lineRenderer.startColor = Color.black;
         lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
+
+        companionLanes = new();
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (autoBowl && !waiting)
-        {
-            ThrowBall(pinSetter.HeadPinPosition);
-        }
+        bool inAuto = ui.WantsAuto();
 
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
@@ -64,14 +63,14 @@ public class GameManager : MonoBehaviour
         bool groundCheck = Physics.Raycast(ray, out hit, 100f, LayerMask.GetMask("Ground")) && hit.collider.CompareTag("Ground") && validCursorPlacement;
 
         // drawing the line
-        if (groundCheck && !waiting)
+        if (groundCheck && !mainLane.BallInAction)
         {
             lineRenderer.enabled = true;
-            Vector3 headingTo = hit.point - ball.Position;
-            var endPoint = ball.Position + headingTo.normalized * Mathf.Min(headingTo.magnitude, 3);
+            Vector3 headingTo = hit.point - mainLane.Ball.Position;
+            var endPoint = mainLane.Ball.Position + headingTo.normalized * Mathf.Min(headingTo.magnitude, 3);
             endPoint.y = 0.5f;
 
-            lineRenderer.SetPosition(0, ball.Position);
+            lineRenderer.SetPosition(0, mainLane.Ball.Position);
             lineRenderer.SetPosition(1, endPoint);
         }
         else
@@ -79,15 +78,15 @@ public class GameManager : MonoBehaviour
             lineRenderer.enabled = false;
         }
         // throwing the ball
-        if (Input.GetMouseButtonDown(0) && groundCheck && !waiting)
+        if (Input.GetMouseButtonDown(0) && groundCheck && !mainLane.BallInAction && !inAuto)
         {
-            ThrowBall(hit.point);
+            ThrowMainBall(hit.point);
             StartCoroutine(StartResetCooldown());
         }
         // resetting the pins
-        if (Input.GetMouseButtonDown(1) && waiting && !onResetCooldown)
+        if (Input.GetMouseButtonDown(1) && mainLane.BallInAction && !onResetCooldown && !inAuto)
         {
-            ResetThrow();
+            ResetMainThrow();
         }
         // quitting
         if (Input.GetKeyDown(KeyCode.Escape))
@@ -95,7 +94,14 @@ public class GameManager : MonoBehaviour
             Application.Quit();
         }
 
+        // automating your own lane
+        if (inAuto)
+            mainLane.StartAutoBowl();
+        else
+            mainLane.StopAutoBowl();
+
         UpdateUI();
+        ClaimAllPoints();
     }
 
     IEnumerator StartResetCooldown()
@@ -105,22 +111,16 @@ public class GameManager : MonoBehaviour
         onResetCooldown = false;
     }
 
-    void ThrowBall(Vector3 location)
+    void ThrowMainBall(Vector3 location)
     {
-        waiting = true;
-
-        ball.ThrowBall(location);
-        ui.ShowLaunch(ball.GetSpeed());
+        mainLane.ThrowBall(location);
+        ui.ShowLaunch(mainLane.Ball.GetSpeed());
         lineRenderer.enabled = false;
     }
 
-    void ResetThrow()
+    void ResetMainThrow()
     {
-        score += pinSetter.CountPins();
-
-        ball.RespawnBall();
-        pinSetter.ResetPins(goldenOdds);
-        waiting = false;
+        mainLane.ResetThrow();
         lineRenderer.enabled = true;
     }
 
@@ -129,7 +129,7 @@ public class GameManager : MonoBehaviour
         ui.UpdateButtonHighlights(
             upgrades,
             score,
-            !waiting
+            !mainLane.BallInAction
         );
 
         ui.UpdateCosts(
@@ -137,24 +137,41 @@ public class GameManager : MonoBehaviour
         );
 
         ui.SetScore(score);
-        ui.DisplayBallStats(ball);
+        ui.DisplayBallStats(mainLane, goldenOdds);
 
-        ui.UpdatePinDisplay(pinSetter);
+        ui.UpdatePinDisplay(mainLane.PinSetter);
+    }
+
+    void ClaimAllPoints()
+    {
+        score += mainLane.ClaimPoints();
+
+        foreach (Lane companion in companionLanes)
+            score += companion.ClaimPoints();
+    }
+
+    void InitializeCompanionBowler()
+    {
+        var newLane = Instantiate(lane,
+                        companionLaneLocations[companionBowlers],
+                        Quaternion.identity,
+                        this.transform)
+            .GetComponent<Lane>();
+
+        newLane.StartAutoBowl();
+        newLane.SetBallMaterial(companionBowlers);
+        companionLanes.Add(newLane);
+
+        companionBowlers++;
     }
 
     public void TryUpgrade(string name)
     {
         // you can not upgrade while the ball is in action
-        if (waiting) return;
+        if (mainLane.BallInAction && !ui.WantsAuto()) return;
 
         var upgrade = upgrades.Find(u => u.name == name);
         upgrade?.ApplyUpgrade(ref score);
-    }
-
-    void ExpandMap(int amt)
-    {
-        transform.Find("WallR").position += new Vector3(0.2f * amt, 0);
-        transform.Find("WallL").position -= new Vector3(0.2f * amt, 0);
     }
 
     void InitializeUpgrades()
@@ -163,25 +180,28 @@ public class GameManager : MonoBehaviour
         {
             new Upgrade("Speed", "Increase Speed", 20, 100, x => x + 5, () =>
             {
-                ball.AddSpeed(0.1f);
+                mainLane.Ball.AddSpeed(0.1f);
             }),
             new Upgrade("Weight", "Increase Weight", 20, 100, x => x + 5, () =>
             {
-                ball.AddWeight(0.1f);
+                mainLane.Ball.AddWeight(0.1f);
             }),
             new Upgrade("Accuracy", "Increase Accuracy", 20, 30, x => x + 10, () =>
             {
-                ball.ModifyAngleVariance(-0.1f);
+                mainLane.Ball.ModifyAngleVariance(-0.1f);
             }),
-            new Upgrade("Size", "Increase Ball Size", 50, 50, x => (int)(x * 1.5), () =>
+            new Upgrade("Size", "Increase Ball Size", 50, 50, x => x + 25, () =>
             {
-                ball.IncreaseRadius(0.005f);
+                mainLane.Ball.IncreaseRadius(0.005f);
             }),
-            new Upgrade("Row", "Add Extra Pins", 250, 11, x => x * 2, () =>
+            new Upgrade("Companion", "Friend", 100, 2, x => x * 10, () =>
             {
-                pinSetter.AddRows(1);
-                ExpandMap(1);
+                InitializeCompanionBowler();
             }),
+            new Upgrade("GoldOdds", "Gold Pin Rate", 10, 6, x => x * 10, () =>
+            {
+                goldenOdds *= 2;
+            })
         };
     }
 }
